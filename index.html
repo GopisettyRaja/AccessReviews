@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAM Manager Reviews - POC</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">IAM Secure</div>
+                <h1 id="page-title">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-profile">
+                    <img src="https://via.placeholder.com/30" alt="User Avatar" class="user-avatar">
+                    <span>Jane Manager</span>
+                    <i class="fas fa-caret-down"></i>
+                </div>
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">3</span>
+                </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search by Employee, Application...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <nav>
+                    <ul>
+                        <li><a href="#" data-page="dashboard" class="active"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+                        <li><a href="#" data-page="pending-reviews"><i class="fas fa-hourglass-half"></i> <span>Pending Reviews</span></a></li>
+                        <li><a href="#" data-page="completed-reviews"><i class="fas fa-check-circle"></i> <span>Completed Reviews</span></a></li>
+                        <li><a href="#" data-page="user-directory"><i class="fas fa-users"></i> <span>User Directory</span></a></li>
+                        <li><a href="#" data-page="reports"><i class="fas fa-chart-line"></i> <span>Reports & Analytics</span></a></li>
+                        <li><a href="#" data-page="settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
+                        <li><a href="#" data-page="help"><i class="fas fa-question-circle"></i> <span>Help</span></a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main class="page-content">
+                <section id="dashboard-page" class="page active">
+                    <div class="dashboard-summary">
+                        <div class="summary-card primary-bg">
+                            <span class="card-label">Reviews Due Soon</span>
+                            <span class="card-value">7</span>
+                            <span class="card-trend"><i class="fas fa-arrow-up"></i> New this week</span>
+                        </div>
+                        <div class="summary-card danger-bg">
+                            <span class="card-label">Overdue Reviews</span>
+                            <span class="card-value">2</span>
+                            <span class="card-trend"><i class="fas fa-arrow-down"></i> Urgent attention</span>
+                        </div>
+                        <div class="summary-card info-bg">
+                            <span class="card-label">Total Pending Reviews</span>
+                            <span class="card-value">15</span>
+                            <span class="card-trend">Current active reviews</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts">
+                        <div class="chart-card">
+                            <h3>Review Progress Snapshot</h3>
+                            <div class="chart-area" id="review-progress-chart">
+                                <div class="chart-bar-container">
+                                    <div class="chart-bar" style="height: 60%; background-color: var(--success-color-dark);"></div>
+                                    <span class="chart-label">Completed (30)</span>
+                                </div>
+                                <div class="chart-bar-container">
+                                    <div class="chart-bar" style="height: 30%; background-color: var(--warning-color-dark);"></div>
+                                    <span class="chart-label">Pending (15)</span>
+                                </div>
+                                <div class="chart-bar-container">
+                                    <div class="chart-bar" style="height: 10%; background-color: var(--danger-color-dark);"></div>
+                                    <span class="chart-label">Overdue (2)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Recent Activity Feed</h3>
+                            <ul class="activity-feed">
+                                <li>
+                                    <i class="fas fa-info-circle activity-icon primary-color"></i>
+                                    <span class="activity-text"><strong>John Doe</strong> approved access for SalesForce.</span>
+                                    <span class="activity-time">5 mins ago</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-bell activity-icon warning-color"></i>
+                                    <span class="activity-text"><strong>Reminder:</strong> Jane Smith review due in 3 days.</span>
+                                    <span class="activity-time">1 hour ago</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-times-circle activity-icon danger-color"></i>
+                                    <span class="activity-text">You denied access for MarketingApp.</span>
+                                    <span class="activity-time">yesterday</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="pending-reviews-page" class="page">
+                    <h2>Pending Employee Reviews</h2>
+                    <div class="filters-bar">
+                        <div class="input-group">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="reviewSearchInput" placeholder="Search by employee name or application...">
+                        </div>
+                        <div class="filter-group">
+                            <select id="filterDueDate">
+                                <option value="">Due Date</option>
+                                <option value="today">Today</option>
+                                <option value="this-week">This Week</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                            <select id="filterApplication">
+                                <option value="">Application</option>
+                                <option value="salesforce">SalesForce</option>
+                                <option value="jira">Jira</option>
+                                <option value="hris">HRIS</option>
+                                <option value="confluence">Confluence</option>
+                                <option value="corporate vpn">Corporate VPN</option>
+                                <option value="sap erp">SAP ERP</option>
+                                <option value="github enterprise">GitHub Enterprise</option>
+                            </select>
+                            <select id="filterRiskLevel">
+                                <option value="">Risk Level (Any Entitlement)</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                            <select id="filterDepartment">
+                                <option value="">Department</option>
+                                <option value="sales">Sales</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="hr">HR</option>
+                                <option value="finance">Finance</option>
+                                <option value="it">IT</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-outline filter-toggle-btn"><i class="fas fa-filter"></i> Filters</button>
+                    </div>
+
+                    <div class="bulk-actions-bar" id="bulkActionsBar">
+                        <span id="selectedCount">0</span> employees selected
+                        <button class="btn btn-primary" id="bulkApproveBtn"><i class="fas fa-check"></i> Approve Selected</button>
+                        <button class="btn btn-danger" id="bulkDenyBtn"><i class="fas fa-times"></i> Deny Selected</button>
+                    </div>
+
+                    <div class="review-list" id="employeeReviewList">
+                    </div>
+                </section>
+
+                <section id="completed-reviews-page" class="page">
+                    <h2>Completed Reviews</h2>
+                    <p>This page will show completed reviews.</p>
+                </section>
+                <section id="user-directory-page" class="page">
+                    <h2>User Directory</h2>
+                    <p>This page will show a directory of users and their access.</p>
+                </section>
+                <section id="reports-page" class="page">
+                    <h2>Reports & Analytics</h2>
+                    <p>This page will display IAM reports and analytics.</p>
+                </section>
+                <section id="settings-page" class="page">
+                    <h2>Settings</h2>
+                    <p>This page will contain application settings.</p>
+                </section>
+                <section id="help-page" class="page">
+                    <h2>Help</h2>
+                    <p>This page will provide help documentation.</p>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="reviewDetailModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modalEmployeeName"></h2>
+            <p class="modal-subtitle">Department: <span id="modalEmployeeDepartment"></span> | Entitlements to Review: <span id="modalEntitlementCount"></span></p>
+
+            <div class="modal-body">
+                <div class="modal-section modal-entitlements-section">
+                    <h3><i class="fas fa-list-alt primary-color"></i> Entitlements for Review</h3>
+                    <div class="entitlements-table-container">
+                        <table class="entitlements-table">
+                            <thead>
+                                <tr>
+                                    <th>App / Entitlement</th>
+                                    <th>Provisioned Date</th>
+                                    <th>Due Date</th>
+                                    <th>Risk</th>
+                                    <th>Usage / Justification</th>
+                                    <th>Action</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="entitlementsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-actions-summary">
+                        <p>Summary: <strong id="modalDecisionSummary"></strong></p>
+                        <button class="btn btn-approve" id="modalApproveAllBtn"><i class="fas fa-check-double"></i> Approve All Pending</button>
+                        <button class="btn btn-deny" id="modalDenyAllBtn"><i class="fas fa-times"></i> Deny All Pending</button>
+                    </div>
+                </div>
+
+                <div class="modal-section modal-comment-section">
+                    <h3><i class="fas fa-comment-dots primary-color"></i> Overall Review Comment</h3>
+                    <textarea id="modalOverallComment" placeholder="Add overall comments for this employee's review..." rows="4"></textarea>
+                    <div class="modal-overall-actions">
+                        <button class="btn btn-primary" id="modalSubmitReviewBtn"><i class="fas fa-save"></i> Submit Review Decisions</button>
+                        <button class="btn btn-info" id="modalRequestMoreInfoBtn"><i class="fas fa-question"></i> Request More Info</button>
+                    </div>
+                </div>
+
+                <div class="modal-section modal-history-section">
+                    <h3><i class="fas fa-history primary-color"></i> Employee Review History</h3>
+                    <div id="modalEmployeeHistory" class="history-list">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
