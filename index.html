@@ -151,6 +151,9 @@
                     </div>
 
                     <div class="bulk-actions-bar" id="bulkActionsBar">
+                        <label for="selectAllEmployeesCheckbox" class="select-all-label">
+                            <input type="checkbox" id="selectAllEmployeesCheckbox"> Select All Employees
+                        </label>
                         <span id="selectedCount">0</span> employees selected
                         <button class="btn btn-primary" id="bulkApproveBtn"><i class="fas fa-check"></i> Approve Selected</button>
                         <button class="btn btn-danger" id="bulkDenyBtn"><i class="fas fa-times"></i> Deny Selected</button>
@@ -158,6 +161,11 @@
 
                     <div class="review-list" id="employeeReviewList">
                     </div>
+
+                    <div id="loadingIndicator" class="loading-indicator">
+                        <i class="fas fa-spinner fa-spin"></i> Loading More Reviews...
+                    </div>
+                    <div id="noMoreReviewsMessage" class="no-reviews-message" style="display: none;">No more pending reviews.</div>
                 </section>
 
                 <section id="completed-reviews-page" class="page">
@@ -234,7 +242,17 @@
             </div>
         </div>
     </div>
-
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="confirmationTitle">Confirm Action</h2>
+            <p id="confirmationMessage"></p>
+            <div class="modal-actions">
+                <button id="confirmActionButton" class="btn btn-approve">Confirm</button>
+                <button id="cancelActionButton" class="btn btn-outline">Cancel</button>
+            </div>
+        </div>
+    </div>
     <div id="toastContainer"></div>
 
     <script src="script.js"></script>

@@ -355,6 +355,8 @@ input[type="text"]:focus, select:focus, textarea:focus {
     padding: var(--spacing-lg);
     margin-left: 260px; /* Space for fixed sidebar */
     transition: margin-left 0.3s ease;
+    overflow-y: auto; /* Enable scrolling for lazy load detection */
+    height: calc(100vh - 80px); /* Fixed height for scrolling */
 }
 
 .page {
@@ -625,6 +627,25 @@ h2 {
 
     .bulk-actions-bar .btn {
         box-shadow: none; /* Remove redundant shadow */
+    }
+
+/* Select All Checkbox Styling */
+.select-all-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: 600;
+    color: var(--primary-dark-color);
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+}
+
+    .select-all-label input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary-color);
+        cursor: pointer;
+        margin-right: 5px; /* Spacing between checkbox and text */
     }
 
 
@@ -1080,6 +1101,24 @@ h2 {
 }
 
 
+/* Lazy Loading Indicator */
+.loading-indicator {
+    text-align: center;
+    padding: var(--spacing-lg);
+    font-size: 1.1em;
+    color: var(--text-light);
+    display: none; /* Hidden by default */
+}
+
+    .loading-indicator i {
+        margin-right: var(--spacing-sm);
+    }
+
+    .loading-indicator.active {
+        display: block;
+    }
+
+
 /* Responsive Adjustments */
 @media (max-width: 992px) {
     .sidebar {
@@ -1243,4 +1282,120 @@ h2 {
         .modal-actions-summary .btn {
             width: 100%;
         }
+
+    /* --- Confirmation Modal Styles --- */
+    #confirmationModal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1001; /* Sit on top (higher than other modals if needed) */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        padding: 20px; /* Padding around modal */
+        box-sizing: border-box;
+    }
+
+        #confirmationModal.active {
+            display: flex; /* Use flexbox to center content */
+        }
+
+        #confirmationModal .modal-content {
+            background-color: var(--card-bg);
+            margin: auto;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            max-width: 450px; /* Slightly smaller than main modal */
+            width: 100%;
+            text-align: center;
+            transform: translateY(-20px); /* Slight animation start */
+            opacity: 0;
+            animation: fadeInModal 0.3s forwards;
+        }
+
+        #confirmationModal.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #confirmationModal .close-button {
+            color: var(--text-color);
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+            #confirmationModal .close-button:hover,
+            #confirmationModal .close-button:focus {
+                color: var(--primary-color);
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        #confirmationModal h2 {
+            margin-top: 0;
+            color: var(--heading-color);
+            font-size: 1.6em;
+            margin-bottom: 15px;
+        }
+
+        #confirmationModal p {
+            color: var(--text-color);
+            font-size: 1.1em;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        #confirmationModal .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+            #confirmationModal .modal-actions .btn {
+                padding: 10px 25px;
+                min-width: 100px;
+                font-size: 1em;
+            }
+
+        /* Specific button colors for confirmation */
+        #confirmationModal .btn-approve {
+            background-color: var(--approve-color);
+            color: white;
+        }
+
+            #confirmationModal .btn-approve:hover {
+                background-color: darken(var(--approve-color), 10%); /* You'd use a CSS preprocessor or define a darker var */
+                filter: brightness(0.9); /* Fallback for darker hover */
+            }
+
+        #confirmationModal .btn-deny { /* If you want to use for deny as well, similar style */
+            background-color: var(--deny-color);
+            color: white;
+        }
+
+            #confirmationModal .btn-deny:hover {
+                filter: brightness(0.9);
+            }
+
+        #confirmationModal .btn-outline {
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            background-color: transparent;
+        }
+
+            #confirmationModal .btn-outline:hover {
+                background-color: var(--hover-bg);
+                color: var(--primary-color);
+            }
 }
