@@ -1398,4 +1398,65 @@ h2 {
                 background-color: var(--hover-bg);
                 color: var(--primary-color);
             }
+    /* Styling for the always-visible usage details */
+    .usage-details-summary {
+        font-size: 0.8em;
+        color: var(--text-light);
+        margin-top: 5px;
+        display: flex;
+        flex-wrap: wrap; /* Allows items to wrap to next line on smaller screens */
+        gap: 8px; /* Space between the detail items */
+    }
+
+        .usage-details-summary .detail-item {
+            white-space: nowrap; /* Prevent individual detail items from breaking */
+        }
+
+            .usage-details-summary .detail-item i {
+                margin-right: 4px;
+                color: var(--accent-color); /* Or a softer icon color */
+            }
+
+    /* Styling for the original reason toggle button */
+    .original-reason-toggle {
+        background: none;
+        border: none;
+        color: var(--primary-color); /* Or your preferred link color */
+        text-decoration: underline;
+        cursor: pointer;
+        font-size: 0.85em;
+        padding: 0;
+        margin-top: 8px;
+        margin-bottom: 5px;
+        display: block; /* Make it a block element for better spacing */
+    }
+
+        .original-reason-toggle:hover {
+            color: var(--primary-dark);
+        }
+
+    /* --- THIS IS THE CRITICAL PART --- */
+    /* The element that will expand/collapse */
+    .original-reason-details {
+        max-height: 0; /* Initially hidden: SET THIS TO 0 */
+        overflow: hidden; /* Hide content that exceeds max-height */
+        transition: max-height 0.3s ease-out, padding 0.3s ease-out; /* Smooth transition for height and padding */
+        background-color: var(--bg-secondary); /* Light background for contrast */
+        border-left: 3px solid var(--border-color); /* A small decorative border */
+        padding: 0 10px; /* No padding when collapsed */
+        margin-top: 5px;
+        border-radius: var(--border-radius);
+        font-size: 0.8em;
+        color: var(--text-dark);
+    }
+
+        /* This class is added/removed by JavaScript to show/hide the details */
+        .original-reason-details.active {
+            max-height: 100px; /* SET THIS TO A VALUE LARGE ENOUGH TO SHOW ALL CONTENT */
+            padding: 10px; /* Add padding when active */
+        }
+
+        .original-reason-details p {
+            margin: 0; /* Remove default paragraph margin */
+        }
 }

@@ -36,13 +36,11 @@
             <aside class="sidebar">
                 <nav>
                     <ul>
-                        <li><a href="#" data-page="dashboard" class="active"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
-                        <li><a href="#" data-page="pending-reviews"><i class="fas fa-hourglass-half"></i> <span>Pending Reviews</span></a></li>
-                        <li><a href="#" data-page="completed-reviews"><i class="fas fa-check-circle"></i> <span>Completed Reviews</span></a></li>
-                        <li><a href="#" data-page="user-directory"><i class="fas fa-users"></i> <span>User Directory</span></a></li>
-                        <li><a href="#" data-page="reports"><i class="fas fa-chart-line"></i> <span>Reports & Analytics</span></a></li>
-                        <li><a href="#" data-page="settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li>
-                        <li><a href="#" data-page="help"><i class="fas fa-question-circle"></i> <span>Help</span></a></li>
+                        <li><a href="#" data-page="dashboard" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                        <li><a href="#" data-page="pending-reviews"><i class="fas fa-tasks"></i><span>Pending Reviews</span></a></li>
+                        <li><a href="#" data-page="completed-reviews"><i class="fas fa-check-circle"></i><span>Completed Reviews</span></a></li>
+                        <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a></li>
+                        <li><a href="#" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></a></li>
                     </ul>
                 </nav>
             </aside>
@@ -254,7 +252,45 @@
         </div>
     </div>
     <div id="toastContainer"></div>
+    <div class="filter-group">
+        <label for="sortEmployees">Sort By:</label>
+        <select id="sortEmployees">
+            <option value="name-asc">Employee Name (A-Z)</option>
+            <option value="name-desc">Employee Name (Z-A)</option>
+            <option value="due-date-asc">Earliest Due Date (Soonest First)</option>
+            <option value="due-date-desc">Earliest Due Date (Latest First)</option>
+            <option value="department-asc">Department (A-Z)</option>
+            <option value="department-desc">Department (Z-A)</option>
+            <option value="pending-entitlements-desc">Pending Entitlements (High to Low)</option>
+            <option value="pending-entitlements-asc">Pending Entitlements (Low to High)</option>
+        </select>
+    </div>
 
+    <div class="filter-group">
+        <label for="filterApplication">Application:</label>
+        <select id="filterApplication">
+            <option value="">All Applications</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label for="filterDepartment">Department:</label>
+        <select id="filterDepartment">
+            <option value="">All Departments</option>
+        </select>
+    </div>
+
+    <div id="promptModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="promptCloseButton">&times;</span>
+            <h2 id="promptTitle"></h2>
+            <p id="promptMessage"></p>
+            <textarea id="promptInput" rows="4" placeholder="Enter your reason here..."></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="promptCancelButton">Cancel</button>
+                <button class="btn btn-primary" id="promptConfirmButton">Submit</button>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

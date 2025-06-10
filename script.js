@@ -1,8 +1,7 @@
 ﻿document.addEventListener('DOMContentLoaded', () => {
-    // ... (existing variable declarations) ...
-
+    // --- DOM Element References ---
     const pageTitle = document.getElementById('page-title');
-    const navLinks = document.querySelectorAll('.sidebar nav ul li a');
+    const navLinks = document.querySelectorAll('.sidebar nav ul li a'); // Check this selector carefully with your HTML
     const pages = document.querySelectorAll('.page');
     const employeeReviewList = document.getElementById('employeeReviewList');
     const reviewDetailModal = document.getElementById('reviewDetailModal');
@@ -14,7 +13,7 @@
     const modalEntitlementCount = document.getElementById('modalEntitlementCount');
     const entitlementsTableBody = document.getElementById('entitlementsTableBody');
     const modalDecisionSummary = document.getElementById('modalDecisionSummary');
-    const modalApproveAllBtn = document.getElementById('modalApproveAllBtn');
+    const modalApproveAllBtn = document.getElementById('modalApproveAllBtn'); // This is now "Approve All Low Risk"
     const modalDenyAllBtn = document.getElementById('modalDenyAllBtn');
     const modalOverallComment = document.getElementById('modalOverallComment');
     const modalSubmitReviewBtn = document.getElementById('modalSubmitReviewBtn');
@@ -26,6 +25,9 @@
     const filterApplication = document.getElementById('filterApplication');
     const filterRiskLevel = document.getElementById('filterRiskLevel');
     const filterDepartment = document.getElementById('filterDepartment');
+    const sortEmployees = document.getElementById('sortEmployees'); // NEW: Sort dropdown
+    let currentSortOrder = 'name-asc'; // Default sort order
+
     const bulkActionsBar = document.getElementById('bulkActionsBar');
     const selectedCountSpan = document.getElementById('selectedCount');
     const bulkApproveBtn = document.getElementById('bulkApproveBtn');
@@ -40,7 +42,7 @@
 
     const toastContainer = document.getElementById('toastContainer');
 
-    // --- NEW: Confirmation Modal Elements ---
+    // Confirmation Modal Elements
     const confirmationModal = document.getElementById('confirmationModal');
     const confirmationTitle = document.getElementById('confirmationTitle');
     const confirmationMessage = document.getElementById('confirmationMessage');
@@ -48,20 +50,28 @@
     const cancelActionButton = document.getElementById('cancelActionButton');
     const confirmCloseButton = confirmationModal.querySelector('.close-button');
 
-    // --- NEW: Variables to store context for confirmation ---
+    // Prompt Modal Elements (for denial comments)
+    const promptModal = document.getElementById('promptModal');
+    const promptTitle = document.getElementById('promptTitle');
+    const promptMessage = document.getElementById('promptMessage');
+    const promptInput = document.getElementById('promptInput');
+    const promptConfirmButton = document.getElementById('promptConfirmButton');
+    const promptCancelButton = document.getElementById('promptCancelButton');
+    const promptCloseButton = promptModal.querySelector('.close-button');
+
+    // Variables to store context for confirmation and prompt
     let pendingConfirmationAction = null; // Stores the function to call on confirmation
     let pendingConfirmationData = null; // Stores data needed by the function
+    let pendingPromptAction = null; // Stores the function to call with prompt input
 
-
-    // Mock Data - Now Employee-centric (More data for better lazy load demo)
+    // --- Mock Data ---
     let employeeReviewsData = [];
     // Generate 50 dummy employees for lazy loading demonstration
     for (let i = 1; i <= 50; i++) {
-        const employeeName = `Employee ${i} ${String.fromCharCode(65 + (i % 26))}`; // e.g., Employee 1 A, Employee 2 B
+        const employeeName = `Employee ${i} ${String.fromCharCode(65 + (i % 26))}`;
         const departmentOptions = ['Sales', 'Engineering', 'HR', 'Finance', 'IT', 'Marketing', 'Operations'];
         const department = departmentOptions[i % departmentOptions.length];
         const riskLevelOptions = ['Low', 'Medium', 'High'];
-        const riskLevel = riskLevelOptions[i % riskLevelOptions.length];
 
         const entitlementsCount = Math.floor(Math.random() * 3) + 1; // 1 to 3 entitlements per employee
         const entitlements = [];
@@ -77,13 +87,13 @@
                 entitlementId: `ent${String(i).padStart(3, '0')}${String.fromCharCode(96 + j)}`,
                 application: app,
                 entitlementName: `${app} Access ${j}`,
-                reasonForAccess: `Standard access for ${employeeName} in ${department}.`,
+                reasonForAccess: `Standard access for ${employeeName} in ${department}. This is a more detailed reason for access that might need to be hidden sometimes.`,
                 provisionedDate: provisionedDate.toISOString().split('T')[0],
                 dueDate: dueDate.toISOString().split('T')[0],
                 riskLevel: riskLevelOptions[Math.floor(Math.random() * riskLevelOptions.length)],
                 lastLogin: `2025-05-${String(Math.floor(Math.random() * 30) + 1).padStart(2, '0')} 09:00 AM`,
                 lastActivity: `2025-05-${String(Math.floor(Math.random() * 30) + 1).padStart(2, '0')} 09:30 AM`,
-                activityFrequency: ['Daily', 'Weekly', 'Infrequent'][Math.floor(Math.random() * 3)],
+                activityFrequency: ['Daily', 'Weekly', 'Infrequent', 'Never Used'][Math.floor(Math.random() * 4)],
                 decision: 'pending',
                 comment: ''
             });
@@ -97,6 +107,37 @@
             entitlements: entitlements,
             isSelected: false, // Initialize selection state for each employee
             overallComment: ''
+        });
+    }
+
+    // --- NEW: Function to populate dynamic filter options ---
+    function populateFilterOptions() {
+        const applications = new Set();
+        const departments = new Set();
+
+        employeeReviewsData.forEach(employee => {
+            departments.add(employee.department);
+            employee.entitlements.forEach(ent => {
+                applications.add(ent.application);
+            });
+        });
+
+        // Populate Application filter
+        filterApplication.innerHTML = '<option value="">All Applications</option>';
+        Array.from(applications).sort().forEach(app => {
+            const option = document.createElement('option');
+            option.value = app;
+            option.textContent = app;
+            filterApplication.appendChild(option);
+        });
+
+        // Populate Department filter
+        filterDepartment.innerHTML = '<option value="">All Departments</option>';
+        Array.from(departments).sort().forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            filterDepartment.appendChild(option);
         });
     }
 
@@ -117,6 +158,8 @@
     pageTitle.textContent = 'Dashboard';
 
     // --- Navigation Logic ---
+    // IMPORTANT: Check your HTML for the .sidebar nav ul li a structure if this isn't working
+    console.log("Nav Links found:", navLinks); // Debugging: Check if elements are found
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -135,6 +178,7 @@
             });
 
             if (targetPageId === 'pending-reviews-page') {
+                populateFilterOptions(); // Populate filters when navigating to this page
                 resetLazyLoadState(); // Reset state when navigating to pending reviews
                 applyFiltersAndLoadEmployees(); // Initial load for this page
                 pageContent.addEventListener('scroll', handleScroll); // Attach scroll listener
@@ -154,8 +198,6 @@
         hasMoreData = true;
         loadingIndicator.classList.remove('active'); // Hide spinner
         noMoreReviewsMessage.style.display = 'none';
-        // Do NOT reset selectAllEmployeesCheckbox.checked here,
-        // updateSelectAllCheckboxState will correctly set its state based on filtered employees.
         selectAllEmployeesCheckbox.indeterminate = false; // Reset indeterminate
         updateBulkActionsBar(); // Update bulk actions bar
         isLoading = false; // IMPORTANT: Ensure isLoading is false for a fresh load
@@ -173,7 +215,7 @@
         today.setHours(0, 0, 0, 0); // Normalize to start of day
 
         // Filter the main employee data based on current criteria
-        currentFilteredEmployees = employeeReviewsData.filter(employee => {
+        let tempFilteredEmployees = employeeReviewsData.filter(employee => {
             // Only consider employees with at least one pending entitlement
             const hasPendingEntitlements = employee.entitlements.some(e => e.decision === 'pending');
             if (!hasPendingEntitlements) return false;
@@ -222,10 +264,57 @@
             return matchesSearch && matchesDueDate && matchesApplication && matchesRiskLevel && matchesDepartment;
         });
 
-        // After filtering, reset lazy load state and load the first batch
+        // Apply Sorting
+        currentFilteredEmployees = sortEmployeesData(tempFilteredEmployees, currentSortOrder);
+
+        // After filtering and sorting, reset lazy load state and load the first batch
         resetLazyLoadState();
         loadMoreEmployees();
     }
+
+    // --- NEW: Sort Function ---
+    function sortEmployeesData(employees, sortOrder) {
+        return employees.sort((a, b) => {
+            const getEarliestDueDate = (emp) => {
+                const pending = emp.entitlements.filter(e => e.decision === 'pending');
+                return pending.length > 0 ? new Date(pending.reduce((min, ent) => ent.dueDate < min ? ent.dueDate : min, '2099-12-31')) : null;
+            };
+
+            const getPendingEntitlementCount = (emp) => {
+                return emp.entitlements.filter(e => e.decision === 'pending').length;
+            };
+
+            switch (sortOrder) {
+                case 'name-asc':
+                    return a.employeeName.localeCompare(b.employeeName);
+                case 'name-desc':
+                    return b.employeeName.localeCompare(a.employeeName);
+                case 'due-date-asc':
+                    const dateA_asc = getEarliestDueDate(a);
+                    const dateB_asc = getEarliestDueDate(b);
+                    if (!dateA_asc) return 1; // null dates go to end
+                    if (!dateB_asc) return -1;
+                    return dateA_asc - dateB_asc;
+                case 'due-date-desc':
+                    const dateA_desc = getEarliestDueDate(a);
+                    const dateB_desc = getEarliestDueDate(b);
+                    if (!dateA_desc) return 1; // null dates go to end
+                    if (!dateB_desc) return -1;
+                    return dateB_desc - dateA_desc;
+                case 'department-asc':
+                    return a.department.localeCompare(b.department);
+                case 'department-desc':
+                    return b.department.localeCompare(a.department);
+                case 'pending-entitlements-asc':
+                    return getPendingEntitlementCount(a) - getPendingEntitlementCount(b);
+                case 'pending-entitlements-desc':
+                    return getPendingEntitlementCount(b) - getPendingEntitlementCount(a);
+                default:
+                    return 0;
+            }
+        });
+    }
+
 
     // Appends the next batch of employees to the UI
     function loadMoreEmployees() {
@@ -263,7 +352,9 @@
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('employee-review-card-checkbox');
                 // Crucially, checkbox state reflects the employee's current isSelected state
-                checkbox.checked = employee.isSelected;
+                // Only allow selection if the employee still has pending entitlements
+                checkbox.checked = employee.isSelected && employee.entitlements.some(e => e.decision === 'pending');
+                checkbox.disabled = !employee.entitlements.some(e => e.decision === 'pending'); // Disable if no pending
                 checkbox.dataset.id = employee.employeeId;
                 cardWrapper.appendChild(checkbox);
 
@@ -275,8 +366,10 @@
                 let employeeStatus = 'Pending';
                 let earliestDueDate = null;
                 let highestRisk = 'Low'; // Track highest risk among pending entitlements
+                let pendingEntitlementCount = 0; // For progress indicator
 
                 employee.entitlements.filter(e => e.decision === 'pending').forEach(entitlement => {
+                    pendingEntitlementCount++;
                     const entDueDate = new Date(entitlement.dueDate);
                     if (!earliestDueDate || entDueDate < earliestDueDate) {
                         earliestDueDate = entDueDate;
@@ -287,7 +380,9 @@
                     }
                 });
 
-                if (earliestDueDate) {
+                if (pendingEntitlementCount === 0) {
+                    employeeStatus = 'Completed'; // All entitlements reviewed
+                } else if (earliestDueDate) {
                     const todayForStatus = new Date();
                     todayForStatus.setHours(0, 0, 0, 0);
                     const statusClass = getStatusClass(earliestDueDate.toISOString().split('T')[0], todayForStatus);
@@ -295,8 +390,13 @@
                     else if (statusClass === 'status-due-soon') employeeStatus = 'Due Soon';
                     else employeeStatus = 'Pending';
                 } else {
-                    employeeStatus = 'No Pending';
+                    employeeStatus = 'N/A'; // Should not happen if pendingEntitlementCount > 0
                 }
+
+                const totalEntitlements = employee.entitlements.length;
+                const completedEntitlements = totalEntitlements - pendingEntitlementCount;
+                const progressPercentage = totalEntitlements > 0 ? (completedEntitlements / totalEntitlements) * 100 : 100;
+                const progressBarClass = progressPercentage === 100 ? 'progress-complete' : '';
 
                 const riskBadgeClass = `risk-${highestRisk.toLowerCase()}`;
                 const statusBadgeClass = `status-${employeeStatus.toLowerCase().replace(' ', '-')}`;
@@ -310,14 +410,18 @@
                         <span class="badge ${statusBadgeClass}">${employeeStatus}</span>
                     </div>
                     <div class="employee-review-meta">
-                        <span><i class="fas fa-cubes"></i> ${employee.entitlements.filter(e => e.decision === 'pending').length} Entitlement(s) Pending</span>
+                        <span><i class="fas fa-cubes"></i> ${pendingEntitlementCount} Entitlement(s) Pending</span>
                         <span><i class="fas fa-calendar-alt"></i> Earliest Due: ${earliestDueDate ? earliestDueDate.toLocaleDateString() : 'N/A'}</span>
                         <span class="badge ${riskBadgeClass}"><i class="fas fa-exclamation-triangle"></i> ${highestRisk} Risk</span>
+                    </div>
+                    <div class="review-progress-bar-container">
+                        <div class="review-progress-bar ${progressBarClass}" style="width: ${progressPercentage}%"></div>
+                        <div class="review-progress-text">${completedEntitlements}/${totalEntitlements} Reviewed</div>
                     </div>
                     <p class="employee-review-summary">Review all active access for ${employee.employeeName} to ensure compliance and security.</p>
                     <div class="employee-review-actions">
                         <button class="btn btn-outline view-details-btn" data-id="${employee.employeeId}"><i class="fas fa-eye"></i> Review Access</button>
-                        <button class="btn btn-approve quick-approve-btn" data-id="${employee.employeeId}"><i class="fas fa-check"></i> Quick Approve All</button>
+                        <button class="btn btn-approve quick-approve-btn" data-id="${employee.employeeId}" ${pendingEntitlementCount === 0 ? 'disabled' : ''}><i class="fas fa-check"></i> Quick Approve Low Risk</button>
                     </div>
                 `;
                 cardWrapper.appendChild(card);
@@ -346,7 +450,7 @@
     }
 
 
-    // --- Quick Approve All function for individual card button ---
+    // --- Quick Approve All function for individual card button (NOW LOW RISK ONLY) ---
     function handleQuickApproveAllAction(employeeId) {
         const employee = employeeReviewsData.find(emp => emp.employeeId === employeeId);
 
@@ -356,33 +460,31 @@
             return;
         }
 
-        const hasPending = employee.entitlements.some(ent => ent.decision === 'pending');
-        if (!hasPending) {
-            showToast('No pending entitlements for this employee.', 'info');
+        const lowRiskPendingEntitlements = employee.entitlements.filter(ent => ent.decision === 'pending' && ent.riskLevel.toLowerCase() === 'low');
+
+        if (lowRiskPendingEntitlements.length === 0) {
+            showToast('No pending Low Risk entitlements for this employee to quick approve.', 'info');
             return;
         }
 
-        // Show enterprise-grade confirmation modal
         showConfirmation(
-            'Confirm Quick Approval',
-            `Are you sure you want to quick approve ALL pending entitlements for <strong>${employee.employeeName}</strong>?`,
+            'Confirm Quick Approval (Low Risk Only)',
+            `Are you sure you want to quick approve **ALL PENDING LOW RISK** entitlements for <strong>${employee.employeeName}</strong>? (${lowRiskPendingEntitlements.length} found)`,
             () => {
-                // This code runs if the user clicks 'Confirm'
-                employee.entitlements.forEach(ent => {
-                    if (ent.decision === 'pending') {
-                        ent.decision = 'approved';
-                        ent.comment = 'Approved via Quick Approve All button.';
-                    }
+                lowRiskPendingEntitlements.forEach(ent => {
+                    ent.decision = 'approved';
+                    ent.comment = 'Approved via Quick Approve Low Risk button.';
                 });
-                employee.overallComment = 'All entitlements quick approved.'; // Set overall comment
 
-                // Filter out employee from the original dataset if no more pending reviews
-                // This ensures they won't appear in the filtered list anymore.
-                employeeReviewsData = employeeReviewsData.filter(emp =>
-                    emp.employeeId !== employee.employeeId || emp.entitlements.some(e => e.decision === 'pending')
-                );
+                // Update overall comment if all entitlements are now processed, or just low risk ones
+                const allPending = employee.entitlements.some(e => e.decision === 'pending');
+                if (!allPending) {
+                    employee.overallComment = 'All entitlements processed. Low risk approved via quick action.';
+                } else {
+                    employee.overallComment = `Low risk entitlements approved. Still ${employee.entitlements.filter(e => e.decision === 'pending').length} pending.`;
+                }
 
-                showToast(`All pending entitlements for ${employee.employeeName} approved!`, 'success');
+                showToast(`Low risk entitlements for ${employee.employeeName} approved!`, 'success');
 
                 // Re-render the list to reflect the changes (removes the card if no pending entitlements left)
                 applyFiltersAndLoadEmployees();
@@ -414,7 +516,14 @@
             // Update the isSelected property in the original employeeReviewsData
             const employee = employeeReviewsData.find(emp => emp.employeeId === id);
             if (employee) {
-                employee.isSelected = e.target.checked;
+                // Only allow selection if the employee still has pending entitlements
+                if (employee.entitlements.some(e => e.decision === 'pending')) {
+                    employee.isSelected = e.target.checked;
+                } else {
+                    // If no pending entitlements, ensure they are not selected
+                    employee.isSelected = false;
+                    e.target.checked = false; // Visually update if somehow checked
+                }
                 updateBulkActionsBar();
                 updateSelectAllCheckboxState(); // Update select all checkbox state when individual changes
             }
@@ -442,37 +551,41 @@
         applyFiltersAndLoadEmployees(); // Re-apply filters and re-load data (resets lazy load)
     }
 
+    // --- MODIFIED: renderEntitlementsTable to work with individual row updates and always visible usage data ---
     function renderEntitlementsTable(entitlements) {
         entitlementsTableBody.innerHTML = '';
         entitlements.forEach(entitlement => {
             const row = entitlementsTableBody.insertRow();
             row.dataset.entitlementId = entitlement.entitlementId;
+            // Initially set class based on current decision
             row.classList.add(`entitlement-status-${entitlement.decision}`);
 
             const riskClass = `risk-${entitlement.riskLevel.toLowerCase()}`;
             const statusBadgeClass = `entitlement-status-badge status-${entitlement.decision}`;
 
-            const detailsActive = entitlement.comment.trim() !== ''; // Keep details open if there's a comment
+            // Check if reasonForAccess exists and is long enough to warrant a toggle
+            // For now, let's always put it behind a toggle for consistency if it's there
+            const hasReasonForAccess = entitlement.reasonForAccess && entitlement.reasonForAccess.trim() !== '';
 
             row.innerHTML = `
                 <td>
                     <strong>${entitlement.application}</strong><br>
                     <small>${entitlement.entitlementName}</small>
+                    <div class="usage-details-summary">
+                        <span class="detail-item"><i class="fas fa-sign-in-alt"></i> Last Login: ${entitlement.lastLogin || 'N/A'}</span>
+                        <span class="detail-item"><i class="fas fa-chart-line"></i> Last Activity: ${entitlement.lastActivity || 'N/A'}</span>
+                        <span class="detail-item"><i class="fas fa-calendar-check"></i> Freq: ${entitlement.activityFrequency || 'N/A'}</span>
+                    </div>
                 </td>
                 <td>${new Date(entitlement.provisionedDate).toLocaleDateString()}</td>
                 <td>${new Date(entitlement.dueDate).toLocaleDateString()}</td>
                 <td><span class="badge ${riskClass}">${entitlement.riskLevel}</span></td>
                 <td>
-                    <button class="usage-justification-toggle" type="button" data-ent-id="${entitlement.entitlementId}">
-                        ${detailsActive ? 'Hide Details' : 'Show Details'}
-                    </button>
-                    <div class="usage-justification-details ${detailsActive ? 'active' : ''}" id="details-${entitlement.entitlementId}">
+                    ${hasReasonForAccess ? `<button class="original-reason-toggle" type="button" data-ent-id="${entitlement.entitlementId}">Show Original Reason</button>` : ''}
+                    <div class="original-reason-details" id="original-reason-${entitlement.entitlementId}">
                         <p><strong>Original Reason:</strong> ${entitlement.reasonForAccess || 'N/A'}</p>
-                        <p><i class="fas fa-clock"></i> Last Login: ${entitlement.lastLogin || 'N/A'}</p>
-                        <p><i class="fas fa-clock"></i> Last Activity: ${entitlement.lastActivity || 'N/A'}</p>
-                        <p>Activity Freq: ${entitlement.activityFrequency || 'N/A'}</p>
-                        <textarea class="entitlement-comment" placeholder="Add comment (optional for approve, required for deny)" data-ent-id="${entitlement.entitlementId}">${entitlement.comment}</textarea>
                     </div>
+                    <textarea class="entitlement-comment" placeholder="Add comment (optional for Low Risk approval, mandatory for High/Medium approval/denial)" data-ent-id="${entitlement.entitlementId}">${entitlement.comment}</textarea>
                 </td>
                 <td>
                     <div class="entitlement-action-btns">
@@ -482,6 +595,15 @@
                 </td>
                 <td><span class="${statusBadgeClass}">${entitlement.decision}</span></td>
             `;
+            // Add event listener for the new original reason toggle
+            if (hasReasonForAccess) {
+                row.querySelector('.original-reason-toggle').addEventListener('click', (event) => {
+                    const toggleButton = event.target;
+                    const detailsDiv = document.getElementById(`original-reason-${toggleButton.dataset.entId}`);
+                    detailsDiv.classList.toggle('active');
+                    toggleButton.textContent = detailsDiv.classList.contains('active') ? 'Hide Original Reason' : 'Show Original Reason';
+                });
+            }
         });
     }
 
@@ -493,9 +615,24 @@
         const pending = total - approved - denied;
         modalDecisionSummary.textContent = `${approved} Approved, ${denied} Denied, ${pending} Pending (out of ${total})`;
 
-        modalApproveAllBtn.disabled = pending === 0;
+        // Re-evaluate modalApproveAllBtn disabled state based on remaining pending LOW risk
+        const pendingLowRisk = currentEmployeeInModal.entitlements.filter(e => e.decision === 'pending' && e.riskLevel.toLowerCase() === 'low').length;
+        modalApproveAllBtn.disabled = pendingLowRisk === 0;
+
         modalDenyAllBtn.disabled = pending === 0;
+        // Make the submit review button enable only when no pending entitlements
         modalSubmitReviewBtn.disabled = pending > 0;
+        // Adjust submit button text for clarity if all are processed
+        if (pending === 0) {
+            modalSubmitReviewBtn.textContent = 'Submit Completed Review';
+            modalSubmitReviewBtn.classList.remove('btn-outline');
+            modalSubmitReviewBtn.classList.add('btn-primary');
+        } else {
+            modalSubmitReviewBtn.textContent = 'Submit Review';
+            modalSubmitReviewBtn.classList.remove('btn-primary');
+            modalSubmitReviewBtn.classList.add('btn-outline');
+        }
+
     }
 
     function renderEmployeeHistory(history) {
@@ -521,7 +658,7 @@
         }
     });
 
-    // Event delegation for individual entitlement actions in modal
+    // --- MODIFIED: Event delegation for individual entitlement actions in modal ---
     entitlementsTableBody.addEventListener('click', (e) => {
         const entId = e.target.dataset.entId;
         if (!entId || !currentEmployeeInModal) return;
@@ -529,74 +666,156 @@
         const entitlement = currentEmployeeInModal.entitlements.find(e => e.entitlementId === entId);
         if (!entitlement) return;
 
+        const row = e.target.closest('tr'); // Get the parent row of the clicked button
+        const commentInput = row.querySelector(`textarea[data-ent-id="${entId}"]`);
+        const statusBadge = row.querySelector('.entitlement-status-badge');
+        const approveBtn = row.querySelector('.entitlement-approve-btn');
+        const denyBtn = row.querySelector('.entitlement-deny-btn');
+
         if (e.target.classList.contains('entitlement-approve-btn')) {
-            entitlement.decision = 'approved';
-            entitlement.comment = entitlementsTableBody.querySelector(`textarea[data-ent-id="${entId}"]`).value;
-            showToast(`Entitlement ${entitlement.application} - ${entitlement.entitlementName} Approved`, 'success');
-        } else if (e.target.classList.contains('entitlement-deny-btn')) {
-            const commentInput = entitlementsTableBody.querySelector(`textarea[data-ent-id="${entId}"]`);
-            if (!commentInput.value.trim()) {
-                showToast('Please provide a comment for denying this entitlement.', 'warning');
-                return;
+            // --- NEW LOGIC: Enforce comment for Medium/High Risk approval ---
+            if (entitlement.riskLevel.toLowerCase() === 'medium' || entitlement.riskLevel.toLowerCase() === 'high') {
+                showPromptModal(
+                    'Reason for Approval',
+                    `Please provide a mandatory reason for approving <strong>${entitlement.application} - ${entitlement.entitlementName}</strong> (Risk: ${entitlement.riskLevel}):`,
+                    (comment) => {
+                        if (!comment.trim()) {
+                            showToast('A comment is required for approving Medium/High risk entitlements.', 'warning');
+                            return false; // Prevent modal from closing if comment is empty
+                        }
+                        entitlement.decision = 'approved';
+                        entitlement.comment = comment;
+                        commentInput.value = comment; // Update the textarea in the main modal
+
+                        // Update UI elements directly for this row
+                        row.classList.remove('entitlement-status-pending', 'entitlement-status-denied');
+                        row.classList.add('entitlement-status-approved');
+                        statusBadge.textContent = 'approved';
+                        statusBadge.classList.remove('status-pending', 'status-denied');
+                        statusBadge.classList.add('status-approved');
+                        approveBtn.disabled = true;
+                        denyBtn.disabled = true;
+
+                        showToast(`Entitlement ${entitlement.application} - ${entitlement.entitlementName} Approved (Risk: ${entitlement.riskLevel})`, 'success');
+                        updateModalDecisionSummary(); // Update summary after successful approval
+                        return true; // Allow modal to close
+                    },
+                    commentInput.value // Pre-fill prompt input if there's an existing comment
+                );
+                return; // Exit here, updateModalDecisionSummary is called by the prompt callback
+            } else { // Low risk approval remains optional comment
+                entitlement.decision = 'approved';
+                entitlement.comment = commentInput.value || 'Approved.'; // Comment optional for low risk approve
+
+                // Update UI elements directly for this row
+                row.classList.remove('entitlement-status-pending', 'entitlement-status-denied');
+                row.classList.add('entitlement-status-approved');
+                statusBadge.textContent = 'approved';
+                statusBadge.classList.remove('status-pending', 'status-denied');
+                statusBadge.classList.add('status-approved');
+                approveBtn.disabled = true;
+                denyBtn.disabled = true;
+
+                showToast(`Entitlement ${entitlement.application} - ${entitlement.entitlementName} Approved`, 'success');
             }
-            entitlement.decision = 'denied';
-            entitlement.comment = commentInput.value;
-            showToast(`Entitlement ${entitlement.application} - ${entitlement.entitlementName} Denied`, 'danger');
-        } else if (e.target.classList.contains('usage-justification-toggle')) {
-            const detailsDiv = document.getElementById(`details-${entId}`);
-            detailsDiv.classList.toggle('active');
-            e.target.textContent = detailsDiv.classList.contains('active') ? 'Hide Details' : 'Show Details';
-            return; // Exit function after toggling to avoid re-rendering
+        } else if (e.target.classList.contains('entitlement-deny-btn')) {
+            // --- Deny still uses prompt modal ---
+            showPromptModal(
+                'Reason for Denial',
+                `Please provide a mandatory reason for denying <strong>${entitlement.application} - ${entitlement.entitlementName}</strong> (Risk: ${entitlement.riskLevel}):`,
+                (comment) => {
+                    if (!comment.trim()) {
+                        showToast('A comment is required for denying this entitlement.', 'warning');
+                        return false; // Prevent modal from closing if comment is empty
+                    }
+
+                    entitlement.decision = 'denied';
+                    entitlement.comment = comment;
+                    commentInput.value = comment; // Update the textarea in the main modal
+
+                    // Update UI elements directly for this row
+                    row.classList.remove('entitlement-status-pending', 'entitlement-status-approved');
+                    row.classList.add('entitlement-status-denied');
+                    statusBadge.textContent = 'denied';
+                    statusBadge.classList.remove('status-pending', 'status-approved');
+                    statusBadge.classList.add('status-denied');
+                    approveBtn.disabled = true;
+                    denyBtn.disabled = true;
+
+                    showToast(`Entitlement ${entitlement.application} - ${entitlement.entitlementName} Denied`, 'danger');
+                    updateModalDecisionSummary(); // Update summary after successful denial
+                    return true; // Allow modal to close
+                },
+                commentInput.value // Pre-fill prompt input if there's an existing comment
+            );
+            return; // Exit here, updateModalDecisionSummary is called by the prompt callback
         }
 
-        // Re-render table and update summary to reflect changes
-        renderEntitlementsTable(currentEmployeeInModal.entitlements);
-        updateModalDecisionSummary();
+        // Only update summary if an action other than a prompt-requiring one occurred
+        // (prompt callbacks handle their own summary updates)
+        if (!e.target.classList.contains('entitlement-approve-btn') || entitlement.riskLevel.toLowerCase() === 'low') {
+            updateModalDecisionSummary();
+        }
     });
 
-    // Bulk actions within the modal (These already use simple prompts, will leave for now or can convert later)
+    // --- MODIFIED: Bulk actions within the modal (Approve All now Low Risk Only) ---
     modalApproveAllBtn.addEventListener('click', () => {
         if (!currentEmployeeInModal) return;
 
-        // Use custom confirmation for modal bulk approve
+        const lowRiskPendingEntitlements = currentEmployeeInModal.entitlements.filter(ent => ent.decision === 'pending' && ent.riskLevel.toLowerCase() === 'low');
+
+        if (lowRiskPendingEntitlements.length === 0) {
+            showToast('No pending Low Risk entitlements to approve for this employee.', 'info');
+            return;
+        }
+
         showConfirmation(
-            'Confirm Approve All',
-            `Are you sure you want to approve ALL pending entitlements for <strong>${currentEmployeeInModal.employeeName}</strong>?`,
+            'Confirm Approve All Low Risk',
+            `Are you sure you want to approve **ALL PENDING LOW RISK** entitlements for <strong>${currentEmployeeInModal.employeeName}</strong>? (${lowRiskPendingEntitlements.length} found)`,
             () => {
-                currentEmployeeInModal.entitlements.forEach(ent => {
-                    if (ent.decision === 'pending') {
-                        ent.decision = 'approved';
-                        ent.comment = 'Approved as part of "Approve All" action.';
-                    }
+                lowRiskPendingEntitlements.forEach(ent => {
+                    ent.decision = 'approved';
+                    ent.comment = 'Approved as part of "Approve All Low Risk" action.';
                 });
-                renderEntitlementsTable(currentEmployeeInModal.entitlements);
+                renderEntitlementsTable(currentEmployeeInModal.entitlements); // Re-render table to reflect changes
                 updateModalDecisionSummary();
-                showToast(`All pending entitlements for ${currentEmployeeInModal.employeeName} approved!`, 'success');
+                showToast(`All pending Low Risk entitlements for ${currentEmployeeInModal.employeeName} approved!`, 'success');
             },
             'Approve All'
         );
     });
 
+    // --- MODIFIED: modalDenyAllBtn to use the new prompt modal ---
     modalDenyAllBtn.addEventListener('click', () => {
         if (!currentEmployeeInModal) return;
 
-        // For denial, we still need a way to get the comment.
-        // A simple prompt is okay here for now, or we could extend the custom modal
-        // to include an input field, which is a more complex enhancement.
-        const comment = prompt('Please provide a mandatory reason for denying all pending entitlements:');
-        if (comment !== null && comment.trim() !== '') {
-            currentEmployeeInModal.entitlements.forEach(ent => {
-                if (ent.decision === 'pending') {
-                    ent.decision = 'denied';
-                    ent.comment = comment;
-                }
-            });
-            renderEntitlementsTable(currentEmployeeInModal.entitlements);
-            updateModalDecisionSummary();
-            showToast(`All pending entitlements for ${currentEmployeeInModal.employeeName} denied!`, 'danger');
-        } else if (comment === '') {
-            showToast('Bulk denial requires a reason.', 'warning');
+        const pendingCount = currentEmployeeInModal.entitlements.filter(e => e.decision === 'pending').length;
+        if (pendingCount === 0) {
+            showToast('No pending entitlements to deny.', 'warning');
+            return;
         }
+
+        showPromptModal(
+            'Reason for Denying All',
+            `Please provide a mandatory reason for denying all ${pendingCount} pending entitlements for <strong>${currentEmployeeInModal.employeeName}</strong>:`,
+            (comment) => {
+                if (!comment.trim()) {
+                    showToast('Bulk denial requires a reason.', 'warning');
+                    return false; // Prevent modal from closing if comment is empty
+                }
+
+                currentEmployeeInModal.entitlements.forEach(ent => {
+                    if (ent.decision === 'pending') {
+                        ent.decision = 'denied';
+                        ent.comment = comment;
+                    }
+                });
+                renderEntitlementsTable(currentEmployeeInModal.entitlements); // Re-render table to reflect changes
+                updateModalDecisionSummary();
+                showToast(`All pending entitlements for ${currentEmployeeInModal.employeeName} denied!`, 'danger');
+                return true; // Allow modal to close
+            }
+        );
     });
 
     // Submit overall review decision
@@ -617,13 +836,16 @@
                 currentEmployeeInModal.overallComment = modalOverallComment.value;
 
                 // Simulate successful submission by filtering out processed employee
+                // This logic ensures that if an employee had ALL their entitlements processed
+                // and approved/denied, they are removed from the main list.
+                // If they still have pending entitlements (e.g., if a new one was added after review started),
+                // they remain in the list.
                 employeeReviewsData = employeeReviewsData.filter(emp =>
                     emp.employeeId !== currentEmployeeInModal.employeeId ||
                     emp.entitlements.some(e => e.decision === 'pending')
                 );
 
                 showToast(`Review for ${currentEmployeeInModal.employeeName} submitted successfully!`, 'success');
-
                 closeReviewDetailModal(); // This will re-render the list
             },
             'Submit Review'
@@ -666,7 +888,6 @@
     }
 
     // --- Filtering and Search ---
-    // These now trigger a reset of lazy load state and re-application of filters
     reviewSearchInput.addEventListener('input', () => {
         applyFiltersAndLoadEmployees();
     });
@@ -683,19 +904,35 @@
         applyFiltersAndLoadEmployees();
     });
 
+    // --- NEW: Sort Event Listener ---
+    sortEmployees.addEventListener('change', (e) => {
+        currentSortOrder = e.target.value;
+        applyFiltersAndLoadEmployees(); // Re-apply filters which will also apply sorting
+    });
+
     // --- Select All Employees Feature ---
     selectAllEmployeesCheckbox.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         // Apply selection to ALL currently filtered employees in the data source
         currentFilteredEmployees.forEach(employee => {
-            employee.isSelected = isChecked;
+            // Only allow selection if the employee still has pending entitlements
+            // This prevents selecting employees who are already fully reviewed
+            if (employee.entitlements.some(e => e.decision === 'pending')) {
+                employee.isSelected = isChecked;
+            } else {
+                // If no pending entitlements, ensure they are not selected
+                employee.isSelected = false;
+            }
         });
 
         // Update UI checkboxes for currently displayed employees
-        // This is necessary because currentFilteredEmployees might contain more than displayedEmployees
         const visibleCheckboxes = employeeReviewList.querySelectorAll('.employee-review-card-checkbox');
         visibleCheckboxes.forEach(checkbox => {
-            checkbox.checked = isChecked;
+            const empId = checkbox.dataset.id;
+            const employee = currentFilteredEmployees.find(emp => emp.employeeId === empId);
+            if (employee) {
+                checkbox.checked = employee.isSelected;
+            }
         });
 
         updateBulkActionsBar();
@@ -703,21 +940,22 @@
     });
 
     function updateSelectAllCheckboxState() {
-        const totalFilteredCount = currentFilteredEmployees.length;
-        // Count only those selected employees that still have pending entitlements,
-        // as they are the ones relevant for bulk actions.
-        const selectedFilteredCount = currentFilteredEmployees.filter(emp => emp.isSelected && emp.entitlements.some(e => e.decision === 'pending')).length;
+        const totalFilteredPendingCount = currentFilteredEmployees.filter(emp => emp.entitlements.some(e => e.decision === 'pending')).length;
+        const selectedFilteredPendingCount = currentFilteredEmployees.filter(emp => emp.isSelected && emp.entitlements.some(e => e.decision === 'pending')).length;
 
-        if (totalFilteredCount === 0) {
+        if (totalFilteredPendingCount === 0) {
             selectAllEmployeesCheckbox.checked = false;
             selectAllEmployeesCheckbox.indeterminate = false;
+            selectAllEmployeesCheckbox.disabled = true; // Disable if no pending employees to select
             return;
         }
 
-        if (selectedFilteredCount === totalFilteredCount) {
+        selectAllEmployeesCheckbox.disabled = false; // Enable if there are pending employees
+
+        if (selectedFilteredPendingCount === totalFilteredPendingCount) {
             selectAllEmployeesCheckbox.checked = true;
             selectAllEmployeesCheckbox.indeterminate = false;
-        } else if (selectedFilteredCount > 0) {
+        } else if (selectedFilteredPendingCount > 0) {
             // Some, but not all, are selected
             selectAllEmployeesCheckbox.checked = false;
             selectAllEmployeesCheckbox.indeterminate = true;
@@ -751,31 +989,57 @@
             return;
         }
 
-        // Use custom confirmation for bulk approve
-        showConfirmation(
-            'Confirm Bulk Approval',
-            `Are you sure you want to approve ALL pending entitlements for <strong>${selectedEmployeesToProcess.length}</strong> selected employees?`,
-            () => {
-                selectedEmployeesToProcess.forEach(employee => {
-                    employee.entitlements.forEach(ent => {
-                        if (ent.decision === 'pending') {
-                            ent.decision = 'approved';
-                            ent.comment = 'Approved via bulk action.';
-                        }
-                    });
-                    employee.overallComment = 'All entitlements approved via bulk action.';
-                    showToast(`All entitlements for ${employee.employeeName} approved!`, 'success');
-                    employee.isSelected = false; // Deselect after processing
-                });
-                // After bulk action, re-filter and re-load to reflect changes
-                applyFiltersAndLoadEmployees();
-                updateBulkActionsBar(); // Update after render
-                updateSelectAllCheckboxState(); // Update select all checkbox state
-            },
-            'Approve Selected'
-        );
+        // --- MODIFIED: Bulk approve now only processes LOW risk items for selected employees ---
+        let totalLowRiskApproved = 0;
+        let employeesWithHighMediumRisk = 0;
+
+        selectedEmployeesToProcess.forEach(employee => {
+            let employeeHadLowRiskPending = false;
+            employee.entitlements.forEach(ent => {
+                if (ent.decision === 'pending' && ent.riskLevel.toLowerCase() === 'low') {
+                    ent.decision = 'approved';
+                    ent.comment = 'Approved via bulk action (Low Risk).';
+                    totalLowRiskApproved++;
+                    employeeHadLowRiskPending = true;
+                }
+            });
+            if (employeeHadLowRiskPending) {
+                // If employee had any low risk items approved, deselect them.
+                // If they still have high/medium risk items, they remain in the filtered list.
+                employee.isSelected = false; // Deselect after processing their low risk
+                // Update overall comment if all entitlements are now processed, or just low risk ones
+                const allPending = employee.entitlements.some(e => e.decision === 'pending');
+                if (!allPending) {
+                    employee.overallComment = 'All entitlements processed. Low risk approved via bulk action.';
+                } else {
+                    employee.overallComment = `Low risk entitlements approved via bulk action. Still ${employee.entitlements.filter(e => e.decision === 'pending').length} pending (High/Medium risk).`;
+                    employeesWithHighMediumRisk++;
+                }
+                showToast(`Low risk entitlements for ${employee.employeeName} approved!`, 'success');
+            }
+        });
+
+        if (totalLowRiskApproved > 0) {
+            showConfirmation(
+                'Confirm Bulk Approval (Low Risk Only)',
+                `Are you sure you want to approve **ALL PENDING LOW RISK** entitlements for <strong>${selectedEmployeesToProcess.length}</strong> selected employees? (${totalLowRiskApproved} entitlements will be approved).`,
+                () => {
+                    // This logic is already done above. We just need to refresh UI.
+                    applyFiltersAndLoadEmployees();
+                    updateBulkActionsBar();
+                    updateSelectAllCheckboxState();
+                    if (employeesWithHighMediumRisk > 0) {
+                        showToast(`Bulk approval completed for Low Risk items. ${employeesWithHighMediumRisk} selected employees still have High/Medium risk pending entitlements.`, 'info', 5000);
+                    }
+                },
+                'Approve Selected'
+            );
+        } else {
+            showToast('No pending Low Risk entitlements found among selected employees.', 'warning');
+        }
     });
 
+    // --- MODIFIED: bulkDenyBtn to use the new prompt modal ---
     bulkDenyBtn.addEventListener('click', () => {
         const selectedEmployeesToProcess = currentFilteredEmployees.filter(emp => emp.isSelected && emp.entitlements.some(e => e.decision === 'pending'));
         if (selectedEmployeesToProcess.length === 0) {
@@ -783,31 +1047,33 @@
             return;
         }
 
-        // For bulk denial, we need to prompt for a reason.
-        // This custom confirmation doesn't currently support an input field.
-        // For a true enterprise-grade solution, you'd extend the confirmation modal
-        // to include a text area for comments, or use a separate, dedicated "Deny Reason" modal.
-        // For now, we'll use a basic prompt here, acknowledging this is an area for further enhancement.
-        const comment = prompt(`Are you sure you want to deny ALL pending entitlements for ${selectedEmployeesToProcess.length} selected employees? Please provide a mandatory reason for bulk denial:`);
-        if (comment !== null && comment.trim() !== '') {
-            selectedEmployeesToProcess.forEach(employee => {
-                employee.entitlements.forEach(ent => {
-                    if (ent.decision === 'pending') {
-                        ent.decision = 'denied';
-                        ent.comment = comment;
-                    }
+        showPromptModal(
+            'Reason for Bulk Denial',
+            `Please provide a mandatory reason for denying ALL pending entitlements for <strong>${selectedEmployeesToProcess.length}</strong> selected employees:`,
+            (comment) => {
+                if (!comment.trim()) {
+                    showToast('Bulk denial requires a reason.', 'warning');
+                    return false; // Prevent modal from closing if comment is empty
+                }
+
+                selectedEmployeesToProcess.forEach(employee => {
+                    employee.entitlements.forEach(ent => {
+                        if (ent.decision === 'pending') {
+                            ent.decision = 'denied';
+                            ent.comment = comment;
+                        }
+                    });
+                    employee.overallComment = `All entitlements denied via bulk action: ${comment}`;
+                    showToast(`All entitlements for ${employee.employeeName} denied!`, 'danger');
+                    employee.isSelected = false; // Deselect after processing
                 });
-                employee.overallComment = `All entitlements denied via bulk action: ${comment}`;
-                showToast(`All entitlements for ${employee.employeeName} denied!`, 'danger');
-                employee.isSelected = false; // Deselect after processing
-            });
-            // After bulk action, re-filter and re-load to reflect changes
-            applyFiltersAndLoadEmployees();
-            updateBulkActionsBar(); // Update after render
-            updateSelectAllCheckboxState(); // Update select all checkbox state
-        } else if (comment === '') {
-            showToast('Bulk denial requires a reason.', 'warning');
-        }
+                // After bulk action, re-filter and re-load to reflect changes
+                applyFiltersAndLoadEmployees();
+                updateBulkActionsBar(); // Update after render
+                updateSelectAllCheckboxState(); // Update select all checkbox state
+                return true; // Allow modal to close
+            }
+        );
     });
 
 
@@ -847,12 +1113,12 @@
     });
 
     // --- NEW: Enterprise-Grade Confirmation Modal Functions ---
-    function showConfirmation(title, message, onConfirmCallback, confirmBtnText = 'Confirm') {
+    function showConfirmation(title, message, onConfirmCallback, confirmBtnText = 'Confirm', duration = 3000) {
         confirmationTitle.innerHTML = title;
         confirmationMessage.innerHTML = message;
         confirmActionButton.textContent = confirmBtnText;
         // Optionally change button class based on action type (e.g., btn-deny for denial)
-        confirmActionButton.classList.remove('btn-deny'); // Ensure previous class is removed
+        confirmActionButton.classList.remove('btn-deny', 'btn-approve'); // Ensure previous class is removed
         if (confirmBtnText.toLowerCase().includes('deny')) {
             confirmActionButton.classList.add('btn-deny');
         } else {
@@ -886,5 +1152,54 @@
         }
     });
 
-    // Current setup: Dashboard is default. When user clicks "Pending Reviews", the logic above handles it.
+
+    // --- NEW: General Purpose Prompt Modal Functions (for mandatory comments) ---
+    function showPromptModal(title, message, onConfirmCallback, initialValue = '') {
+        promptTitle.innerHTML = title;
+        promptMessage.innerHTML = message;
+        promptInput.value = initialValue;
+        pendingPromptAction = onConfirmCallback; // Store the callback
+
+        promptModal.classList.add('active');
+        promptInput.focus(); // Focus on the input field
+    }
+
+    function hidePromptModal() {
+        promptModal.classList.remove('active');
+        promptInput.value = ''; // Clear input
+        pendingPromptAction = null;
+    }
+
+    promptConfirmButton.addEventListener('click', () => {
+        if (pendingPromptAction) {
+            const comment = promptInput.value;
+            // Execute the callback. If it returns true, close the modal.
+            // This allows the callback to enforce validation (e.g., non-empty comment).
+            if (pendingPromptAction(comment)) {
+                hidePromptModal();
+            }
+        } else {
+            hidePromptModal(); // If no action, just close
+        }
+    });
+
+    promptCancelButton.addEventListener('click', hidePromptModal);
+    promptCloseButton.addEventListener('click', hidePromptModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === promptModal) {
+            hidePromptModal();
+        }
+    });
+
+
+    // Initial setup: Dashboard is default. If you intend for "Pending Reviews" to be the default page
+    // on load, you can change the initial 'active' class assignment in your HTML, or uncomment/adjust
+    // the following lines.
+    // Ensure populateFilterOptions() and applyFiltersAndLoadEmployees() are called
+    // when the pending-reviews-page is the initial active page, or when navigated to.
+    if (document.getElementById('pending-reviews-page').classList.contains('active')) {
+        populateFilterOptions();
+        applyFiltersAndLoadEmployees();
+        pageContent.addEventListener('scroll', handleScroll);
+    }
 });
